@@ -36,4 +36,26 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    
+    public function microposts()
+    {
+        return $this->hasMany(Micropost::class);
+    }
+    
+    public function loadRelationshipCounts()
+    {
+        $this->loadCount("microposts");
+    }
+    
+    public function show($id)
+    {
+        $user =User::findOrFail($id);
+        $user->loadRelationshipCounts();
+        $microposts =$user->microposts()->orderBy("created_at","desc")->paginate(10);
+        return view("users.show",[
+            "user" => $user,
+            "microposts" =>$microposts,
+            ]);
+        
+    }
 }

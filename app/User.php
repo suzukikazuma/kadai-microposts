@@ -49,43 +49,76 @@ class User extends Authenticatable
     
     public function followings()
     {
-        return $this->belongsToMany(User::class,"user_follow","user_id","follow_id")->withTimestamps();
+        return $this->belongsToMany(User::class, 'user_follow', 'user_id', 'follow_id')->withTimestamps();
     }
-    
+
+    /**
+     * このユーザをフォロー中のユーザ。（ Userモデルとの関係を定義）
+     */
     public function followers()
     {
-        return $this->belongsToMany(User::class,"user_follow","follow_id","user_id")->withTimestamps();
+        return $this->belongsToMany(User::class, 'user_follow', 'follow_id', 'user_id')->withTimestamps();
     }
     
-    public function follow($userId)
+       public function follow($userId)
     {
+        // すでにフォローしているかの確認
         $exist = $this->is_following($userId);
-        
+        // 相手が自分自身かどうかの確認
         $its_me = $this->id == $userId;
-        
-        if($exist || $its_me){
+
+        if ($exist || $its_me) {
+            // すでにフォローしていれば何もしない
             return false;
-        }else{
+        } else {
+            // 未フォローであればフォローする
             $this->followings()->attach($userId);
             return true;
         }
     }
-    
+
+    /**
+     * $userIdで指定されたユーザをアンフォローする。
+     *
+     * @param  int  $userId
+     * @return bool
+     */
     public function unfollow($userId)
     {
+        // すでにフォローしているかの確認
         $exist = $this->is_following($userId);
-        $its_me =$this->id == $userId;
-        
-        if($exist && !$its_me){
+        // 相手が自分自身かどうかの確認
+        $its_me = $this->id == $userId;
+
+        if ($exist && !$its_me) {
+            // すでにフォローしていればフォローを外す
             $this->followings()->detach($userId);
             return true;
-        }else{
+        } else {
+            // 未フォローであれば何もしない
             return false;
         }
     }
-    
+
+    /**
+     * 指定された $userIdのユーザをこのユーザがフォロー中であるか調べる。フォロー中ならtrueを返す。
+     *
+     * @param  int  $userId
+     * @return bool
+     */
     public function is_following($userId)
     {
-        return $this->followings()->where("follow_id",$userId)->exists();
+        // フォロー中ユーザの中に $userIdのものが存在するか
+        return $this->followings()->where('follow_id', $userId)->exists();
+    }
+
+    
+   
+    
+    public function feed_microposts()
+    {
+        $userIds = $this->followings()->pluck("users.id")->toArray();
+        $userIds[] = $this->id;
+        return Micropost::whereIn("user_id",$userIds);
     }
 }

@@ -13,7 +13,7 @@
                     </div>
                     <div>
                         {{-- 投稿内容 --}}
-                        <p class="mb-0">{!! nl2br(e($micropost->content)) !!}</p>
+                        <p style="word-break: break-all;" class="mb-0">{!! nl2br(e($micropost->content)) !!}</p>
                     </div>
                     <div>
                        
